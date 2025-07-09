@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Línea del Tiempo de Filósofos</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #fff;
+    background-image: url("./imatges/fonsgrec.jpeg");
+    margin: 0;
+    padding: 0;
+  }
+  h1.titol {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 24px;
+  }
+  .timeline {
+    position: relative;
+    height: 200px;
+    border-top: 2px solid #000;
+    margin-left: 100px;
+    margin-top: 30px;
+  }
+  .marca {
+    position: absolute;
+    top: -10px;
+    width: 1px;
+    height: 10px;
+    background: #000;
+  }
+  .etiqueta {
+    position: absolute;
+    top: -25px;
+    font-size: 10px;
+    color: #000;
+  }
+  .filosofo {
+    position: absolute;
+    height: 20px;
+    padding: 2px 10px;
+    border-radius: 8px;
+    background-color: #b0b0b0;
+    color: #000;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .filosofo.fosc {
+    background-color: #333;
+    color: #fff;
+  }
+  .filosofo.fosc2 {
+    background-color: #B33;
+    color: #fff;
+  }
+  .info-capa {
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    background: #f9f9f9;
+    padding: 20px;
+    border: 2px solid #333;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    display: none;
+    z-index: 1000;
+  }
+  .info-capa h2 {
+    margin-top: 0;
+  }
+  .categoria-link {
+    color: #0066cc;
+    text-decoration: underline;
+    cursor: pointer;
+    display: block;
+    margin-top: 10px;
+  }
+  .categoria-capa {
+    display: none;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #efefef;
+    border-radius: 8px;
+  }
+  .tancar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #900;
+  }
+</style>
+</head>
+<body>
+
+<h1 class="titol">Historia de la Filosofía. Antigua Grecia</h1>
+<div class="timeline" id="timeline"></div>
+<div id="contenidor-filosofs"></div>
+<div id="contenidor-corrents"></div>
+<div id="info" class="info-capa">
+  <span class="tancar" onclick="tancarInfo()">X</span>
+  <div id="info-content"></div>
+</div>
+
+<script>
+const escalaInici = -700;
+const escalaFi = -250;
+const pantallaAmplada = window.innerWidth - 200;
+const pixelsPerAny = pantallaAmplada / (escalaFi - escalaInici);
+const offsetYBase = 50;
+
+const filosofs = [
+  { nom: "Milesios", neix: -700, mor: -650, y: 1, fosc: 1 },
+  { nom: "Tales de Mileto", neix: -624, mor: -546, y: 1, fosc: 0 },
+  { nom: "Anaximandro", neix: -610, mor: -546, y: 2, fosc: 0 },
+  { nom: "Anaxímenes", neix: -585, mor: -525, y: 3, fosc: 0 },
+  { nom: "Pitágoras", neix: -570, mor: -495, y: 4, fosc: 2 },
+  { nom: "Monismo dinámico", neix: -650, mor: -600, y: 5, fosc: 1 },
+  { nom: "Heráclito", neix: -535, mor: -475, y: 5, fosc: 0 },
+  { nom: "Monismo estático", neix: -650, mor: -600, y: 6, fosc: 1 },
+  { nom: "Jenófanes", neix: -570, mor: -475, y: 6, fosc: 0 },
+  { nom: "Parménides", neix: -515, mor: -450, y: 7, fosc: 0 },
+  { nom: "Zenón", neix: -490, mor: -430, y: 8, fosc: 0 },
+  { nom: "Meliso de Samos", neix: -470, mor: -420, y: 9, fosc: 0 },
+  { nom: "Pluralistas", neix: -650, mor: -600, y: 10, fosc: 1 },
+  { nom: "Eclecticismo", neix: -590, mor: -540, y: 10, fosc: 1 },
+  { nom: "Empédocles", neix: -495, mor: -435, y: 10, fosc: 0 },
+  { nom: "Plural. heterogeneo", neix: -590, mor: -540, y: 11, fosc: 1 },
+  { nom: "Anaxágoras", neix: -500, mor: -428, y: 11, fosc: 0 },
+  { nom: "Diógenes", neix: -412, mor: -323, y: 12, fosc: 0 },
+  { nom: "Arquelao de Mileto", neix: -500, mor: -430, y: 13, fosc: 0 },
+  { nom: "Plural. homogeneo", neix: -590, mor: -540, y: 14, fosc: 1 },
+  { nom: "Demócrito", neix: -460, mor: -370, y: 14, fosc: 0 },
+  { nom: "Leucipo", neix: -500, mor: -400, y: 15, fosc: 0 },
+  { nom: "Sofistas", neix: -590, mor: -540, y: 16, fosc: 1 },
+  { nom: "Protágoras", neix: -490, mor: -420, y: 16, fosc: 0 },
+  { nom: "Gorgias de Leontinos", neix: -485, mor: -380, y: 17, fosc: 0 },
+  { nom: "Hipas de Elea", neix: -460, mor: -380, y: 18, fosc: 0 },
+  { nom: "Pródico de Ceos", neix: -465, mor: -395, y: 19, fosc: 0 },
+  { nom: "Sócrates", neix: -470, mor: -399, y: 20, fosc: 2 },
+  { nom: "Escuelas Socr. menores", neix: -590, mor: -540, y: 21, fosc: 1 },
+  { nom: "Elis y Eretria", neix: -530, mor: -480, y: 21, fosc: 1 },
+  { nom: "Menedemo de Eretria", neix: -340, mor: -265, y: 21, fosc: 0 },
+  { nom: "Megárica", neix: -530, mor: -480, y: 22, fosc: 1 },
+  { nom: "Euclides", neix: -330, mor: -250, y: 22, fosc: 0 },
+  { nom: "Cínicos", neix: -530, mor: -480, y: 23, fosc: 1 },
+  { nom: "Antístenes", neix: -445, mor: -365, y: 23, fosc: 0 },
+  { nom: "Cirenaicos", neix: -530, mor: -480, y: 24, fosc: 1 },
+  { nom: "Aristipo", neix: -435, mor: -356, y: 24, fosc: 0 },
+  { nom: "Platón", neix: -428, mor: -348, y: 25, fosc: 2 },
+  { nom: "Aristóteles", neix: -384, mor: -322, y: 26, fosc: 2 },
+];
+
+const infoDetallada = {
+  "Milesios": {
+    "Descripción": "Primera escuela filosófica de la historia occidental, ubicada en Mileto (Asia Menor). Sus pensadores buscaron explicaciones racionales del mundo a partir de principios naturales, alejándose del mito. Fundaron la cosmología y la física filosófica."
+  },
+  "Tales de Mileto": {
+    "Descripción": "Ejerció influencia política. Se distingue como matemático y astrónomo, aunque no escribió nada. Debe su fama a inventos de carácter práctico, predijo un eclipse de sol y una buena cosecha de aceitunas. El <b>agua es el primer principio</b> del que provienen todas las cosas, inspirado en las cosmogonías orientales. Se le atribuye la frase 'Todas las cosas están llenas de dioses o de demonios'.",
+    "Cosmología": "La Tierra tiene forma de un gran plato oblongo, con los bordes un poco levantados. Encima está la bóveda de los cielos, y el conjunto flota como un navío sobre las aguas."
+  },
+  "Anaximandro": {
+    "Descripción": "Compañero o discípulo de Tales. Geógrafo, matemático, astrónomo y político. Iniciador de la astronomía griega. El más eminente de los milesios. Se conservan algunos fragmentos de su libro en prosa sobre la Naturaleza.",
+    "Física": "El primer principio es el <i>apéiron</i> (lo ilimitado, lo indefinido, lo indeterminado). Se trata de una materia primordial, homogénea e ilimitada, generadora de todos los seres. Las cosas se forman por diferenciación de contrarios dentro de remolinos cósmicos. La primera oposición es caliente/frío, que origina los elementos fuego, aire, agua y tierra."
+  },
+  "Anaxímenes": {
+    "Descripción": "Discípulo de Anaximandro. Mantuvo el interés por un principio natural, pero eligió uno definido: el aire. Considerado el último gran pensador de la escuela milesia.",
+    "Física": "El principio de todas las cosas es el aire, que por rarefacción se convierte en fuego, y por condensación en agua, tierra y piedra. Introdujo el concepto de transformación cuantitativa como causa del cambio cualitativo.",
+    "Cosmología": "El mundo flota en el aire como una hoja. El Sol y la Luna son discos planos y flotantes iluminados por fuego visible a través del aire."
+  },
+  "Monismo dinámico": {
+    "Descripción": "Corriente filosófica centrada en la idea del cambio perpetuo como esencia del ser. Su principal representante es Heráclito."
+  },
+  "Heráclito": {
+    "Descripción": "Filósofo de Éfeso, apodado 'el Oscuro'. Consideraba que el cambio es la única constante del universo. Criticaba a otros pensadores por su falta de comprensión del logos.",
+    "Doctrina": "Todo fluye (<i>panta rei</i>). El fuego es el principio cósmico, símbolo del cambio. Los contrarios se complementan y se transforman entre sí.",
+    "Cosmología": "El universo está regido por una razón universal, el <i>Logos</i>, que estructura el devenir continuo de la realidad. El equilibrio nace del conflicto."
+  },
+  "Monismo estático": {
+    "Descripción": "Corriente que niega el cambio y la multiplicidad. Defiende un solo ser inmutable y eterno. Su figura clave es Parménides."
+  },
+  "Jenófanes": {
+    "Descripción": "Crítico de la religión antropomórfica griega y poeta-filósofo itinerante. Precursor de la teología filosófica.",
+    "Teología": "Hay un solo dios eterno e inmóvil, distinto de los hombres y superior. Criticó a Homero y Hesíodo por atribuir vicios humanos a los dioses.",
+    "Cosmología": "Considera que la Tierra es infinita y que lo que conocemos depende de la experiencia. Fomenta el escepticismo como vía de conocimiento limitado."
+  },
+  "Parménides": {
+    "Descripción": "Filósofo de Elea y fundador de la escuela eleática. Introdujo la distinción entre la vía de la verdad y la vía de la opinión.",
+    "Doctrina": "El ser es y no puede no ser. Lo que no es, no existe. Niega el cambio, el vacío y la multiplicidad. La razón debe guiar al pensamiento, no los sentidos.",
+    "Cosmología": "La realidad es única, inmóvil, eterna, ingenerada e indivisible. El mundo sensible es ilusorio.",
+    "Obra": "Su poema filosófico 'Sobre la naturaleza' distingue entre el camino del ser (la verdad) y el camino del no-ser (la apariencia)."
+  },
+  "Zenón": {
+    "Descripción": "Discípulo de Parménides. Creador de las paradojas que defienden la tesis de su maestro mediante argumentos lógicos.",
+    "Lógica": "Sus paradojas intentan mostrar que el movimiento y la pluralidad son absurdos. Ejemplo: Aquiles y la tortuga, la dicotomía.",
+    "Importancia": "Anticipó nociones fundamentales de la lógica y la dialéctica. Su pensamiento influirá en los estoicos y en la lógica medieval."
+  },
+  "Meliso de Samos": {
+    "Descripción": "Último gran representante de la escuela eleática. Amplió y reforzó el monismo de Parménides con argumentos más formales.",
+    "Doctrina": "El ser es infinito y eterno. Niega también el vacío y el movimiento. Introduce una versión extensiva del ser como totalidad sin límites."
+  },
+  "Pluralistas": {
+    "Descripción": "Corriente que intenta combinar las ideas del monismo y el cambio. Defienden la existencia de varios principios eternos combinados por fuerzas cósmicas. Incluye pensadores como Empédocles y Anaxágoras."
+  },
+  "Empédocles": {
+    "Descripción": "Filósofo de Agrigento. Poeta, místico y científico. Intentó conciliar las doctrinas de Parménides y Heráclito mediante una teoría pluralista de los elementos.",
+    "Doctrina": "Cuatro elementos eternos (tierra, agua, aire y fuego) que se combinan mediante dos fuerzas cósmicas opuestas: Amor (unión) y Odio (separación). El universo sigue ciclos dominados alternativamente por estas fuerzas.",
+    "Cosmología": "El mundo surge del equilibrio y conflicto entre elementos. La evolución cósmica es cíclica.",
+    "Religión y ética": "Creía en la reencarnación. Defendía una ética de purificación del alma. Se consideraba casi divino, capaz de realizar milagros."
+  },
+  "Plural. heterogeneo": {
+    "Descripción": "Tendencia filosófica representada por Anaxágoras, según la cual el mundo está compuesto por 'semillas' de todas las cualidades."
+  },
+  "Anaxágoras": {
+    "Descripción": "Filósofo jónico que vivió en Atenas. Introdujo el concepto del <i>Nous</i> (mente o inteligencia) como principio ordenador del cosmos.",
+    "Doctrina": "Todo está en todo. El universo está formado por partículas infinitas (homeomerías), pero ordenado por el <i>Nous</i>, una inteligencia divina y separada de la materia.",
+    "Cosmología": "Del caos inicial de partículas, el <i>Nous</i> genera el orden mediante un movimiento rotatorio que separa y agrupa las sustancias.",
+    "Influencia": "Precursor de una visión dualista entre inteligencia y materia. Influenció el pensamiento platónico."
+  },
+  "Plural. homogeneo": {
+    "Descripción": "Tendencia atomista, que concibe toda la realidad como compuesta por partículas idénticas e indivisibles: los átomos."
+  },
+  "Leucipo": {
+    "Descripción": "Fundador de la teoría atomista. Filósofo muy poco documentado, se le atribuye el postulado de que el ser no es continuo sino compuesto por partículas mínimas.",
+    "Doctrina": "Todo ocurre por necesidad. Los átomos son indivisibles, eternos e inmutables. El vacío permite su movimiento y combinación."
+  },
+  "Demócrito": {
+    "Descripción": "Discípulo de Leucipo y principal exponente del atomismo antiguo. Llamado 'el filósofo risueño'.",
+    "Doctrina": "El mundo está formado por átomos y vacío. Los átomos se diferencian por forma, posición y orden. El alma también está compuesta por átomos finos y redondos.",
+    "Cosmología": "El universo no es único: hay infinitos mundos generados por agregación y separación de átomos. Niega la finalidad o intervención divina.",
+    "Ética": "La felicidad se alcanza mediante la serenidad (ataraxia) y el equilibrio del alma. La sabiduría lleva al contento interior.",
+    "Influencia": "Anticipó ideas centrales del materialismo moderno y de la física mecanicista."
+  },
+  "Diógenes": {
+    "Descripción": "Conocido como Diógenes de Sinope, fundador del cinismo. Llevó una vida de pobreza radical para demostrar que la virtud no necesita bienes materiales.",
+    "Doctrina": "Defendía una vida conforme a la naturaleza, libre de convenciones sociales. Practicó la autosuficiencia (<i>autarkeia</i>) y la austeridad extrema.",
+    "Estilo de vida": "Vivía en la calle, dormía en un tonel. Ridiculizaba el lujo y la hipocresía. Llevó la crítica moral hasta el escándalo público.",
+    "Influencia": "Su actitud inspiró posteriormente al estoicismo y al anarquismo filosófico."
+  },
+  "Arquelao de Mileto": {
+    "Descripción": "Discípulo de Anaxágoras. Según algunas fuentes, también fue maestro de Sócrates.",
+    "Doctrina": "Introdujo consideraciones éticas y físicas. Sostenía que el origen de todo está en una mezcla de frío y calor. Los seres humanos nacen del lodo, por la acción del calor.",
+    "Ética": "Afirma que lo justo y lo injusto son convenciones humanas. Se le atribuye haber vinculado naturaleza y moralidad, influyendo en el giro antropológico de Sócrates."
+  },
+  "Sofistas": {
+    "Descripción": "Movimiento filosófico del siglo V a.C., integrado por maestros itinerantes que enseñaban retórica, gramática, política y moral a cambio de dinero. Más que una escuela doctrinal, fueron pensadores diversos unidos por un enfoque práctico y relativista del conocimiento.",
+    "Doctrina general": "El hombre es la medida de todas las cosas. No existe una verdad objetiva, sino múltiples perspectivas según el individuo y el contexto. Reivindican la persuasión como herramienta fundamental de poder social.",
+    "Críticas": "Fueron criticados, especialmente por Platón y Aristóteles, por su relativismo moral y su escepticismo. Sin embargo, jugaron un papel clave en la evolución del pensamiento ético y político."
+  },
+  "Protágoras": {
+    "Descripción": "Uno de los sofistas más influyentes. Enseñaba retórica, gramática y política. Considerado el primero en definirse como 'sofista'.",
+    "Doctrina": "Sostiene que el hombre es la medida de todas las cosas: lo que parece verdadero para uno, es verdadero para él. Esto implica un relativismo gnoseológico y ético.",
+    "Contribuciones": "Cuestionó la existencia de los dioses («sobre los dioses no puedo saber ni que existen ni que no existen»). Aportó herramientas retóricas que influenciaron la pedagogía posterior."
+  },
+  "Gorgias de Leontinos": {
+    "Descripción": "Rétor y filósofo, considerado un maestro de la oratoria. Su escepticismo extremo lo acerca al nihilismo.",
+    "Doctrina": "1) Nada existe. 2) Si algo existiera, no podría ser conocido. 3) Si se pudiera conocer, no podría ser comunicado. Negaba la posibilidad del conocimiento y defendía el poder del lenguaje persuasivo.",
+    "Influencia": "Introdujo la noción de la fuerza estética del lenguaje y su capacidad de moldear realidades subjetivas."
+  },
+  "Hipas de Elea": {
+    "Descripción": "Filósofo sofista y matemático. Participó en la educación de jóvenes atenienses.",
+    "Doctrina": "Defendía el convencionalismo de las leyes y las normas morales. Lo justo y lo legal dependen de la costumbre humana, no de una verdad natural.",
+    "Contribuciones": "Propuso el concepto de 'ley natural' frente a la ley escrita. Mostraba interés por diversas áreas del saber: física, retórica, astronomía, música."
+  },
+  "Pródico de Ceos": {
+    "Descripción": "Filósofo sofista interesado por los orígenes del lenguaje y la moral. Fue contemporáneo de Sócrates.",
+    "Doctrina": "Sostenía que los dioses eran personificaciones de realidades útiles para la vida humana (el Sol, el pan, el vino). Propuso una ética del esfuerzo, como en su célebre mito de Hércules ante la Virtud y el Vicio.",
+    "Influencia": "Se le atribuye haber influido en el desarrollo del pensamiento moral socrático."
+  },
+  "Sócrates": {
+    "Descripción": "Figura central de la filosofía griega. Vivió en Atenas en el siglo V a.C. No dejó escritos, pero su pensamiento se conserva gracias a sus discípulos, especialmente Platón y Jenofonte.",
+    "Método": "Su método dialéctico combinaba la ironía (hacer preguntas para demostrar la ignorancia del interlocutor) y la mayéutica (ayudar a 'parir' el conocimiento desde dentro del alma). No enseñaba contenidos, sino el arte de pensar.",
+    "Ética": "Identificaba virtud con conocimiento. Creía que nadie hace el mal a sabiendas: todo vicio es fruto de la ignorancia. La sabiduría consiste en reconocer la propia ignorancia.",
+    "Vida y muerte": "Fue acusado de impiedad y de corromper a la juventud. En su juicio (relatado por Platón en la 'Apología'), se defendió con firmeza pero fue condenado a muerte. Murió bebiendo cicuta, rechazando escapar, por fidelidad a las leyes de su ciudad.",
+    "Influencia": "Transformó la filosofía hacia lo ético y lo humano. Fundó una tradición de pensamiento crítico que influenció a todas las escuelas posteriores: cínicos, estoicos, epicúreos, escépticos y académicos."
+  },
+  "Escuelas Socr. menores": {
+    "Descripción": "Agrupación de escuelas filosóficas fundadas por discípulos directos de Sócrates o por pensadores influidos por él. Aunque divergentes entre sí, compartían el interés por la ética práctica, la definición de la virtud y la vida buena. Incluyen a los megáricos, cínicos, cirenaicos, escuela de Elis y Eretria, entre otros."
+  },
+  "Elis y Eretria": {
+    "Descripción": "Escuela socrática menor originada en la región de Elis y trasladada después a Eretria. Conectada con los pensadores Fedón y Menedemo. Defendía un enfoque ético basado en la simplicidad de vida y la racionalidad.",
+    "Carácter": "Menos conocida que otras escuelas socráticas, pero con influencia en el pensamiento ético helenístico posterior."
+  },
+  "Menedemo de Eretria": {
+    "Descripción": "Discípulo de Fedón, vinculado a la escuela de Elis y Eretria. Filósofo poco documentado pero activo políticamente en su ciudad.",
+    "Doctrina": "Defendía la autarquía (autosuficiencia) y la importancia de la virtud como guía en todas las circunstancias. Enfrentó tensiones entre filosofía y vida pública.",
+    "Ética": "Sostenía que la sabiduría consistía en vivir según la razón. Fue admirado por su austeridad."
+  },
+  "Megárica": {
+    "Descripción": "Escuela fundada por Euclides de Mégara, discípulo de Sócrates. Se interesó por la lógica y la metafísica, en particular por el concepto del Bien.",
+    "Doctrina": "El Bien es uno e inmutable. Identifican el Bien socrático con el Ser eleático. Argumentaban con sofismas y paradojas lógicas.",
+    "Influencia": "Fueron precursores de la lógica proposicional y sus disputas influyeron en el desarrollo de la lógica estoica."
+  },
+  "Euclides": {
+    "Descripción": "Fundador de la escuela megárica. No debe confundirse con el matemático homónimo. Interesado en ética y lógica.",
+    "Doctrina": "Defendía la unidad del Bien como única realidad. Utilizaba argumentos dialécticos para refutar opiniones ajenas.",
+    "Estilo": "Enseñaba a través de diálogos, similar a Sócrates, pero con mayor sofisticación lógica."
+  },
+  "Cínicos": {
+    "Descripción": "Escuela fundada por Antístenes, discípulo de Sócrates. Proclamaban el rechazo total de las convenciones sociales, los bienes materiales y la vanidad.",
+    "Ética": "La virtud es el único bien. La felicidad se alcanza mediante la autosuficiencia (autarkeia) y la vida según la naturaleza, sin depender de normas ni riquezas.",
+    "Estilo de vida": "Practicaban la provocación como forma de crítica social. Diógenes es su representante más radical."
+  },
+  "Antístenes": {
+    "Descripción": "Discípulo directo de Sócrates y fundador del cinismo. Defendía la primacía de la virtud sobre los placeres y rechazaba las convenciones sociales.",
+    "Doctrina": "La virtud puede aprenderse y es suficiente para alcanzar la felicidad. Defendía una ética austera y racional.",
+    "Influencia": "Inspiró a Diógenes y sentó las bases para el estoicismo posterior."
+  },
+  "Cirenaicos": {
+    "Descripción": "Escuela fundada por Aristipo de Cirene. Derivada del pensamiento socrático, pero enfocada en el hedonismo como eje de la vida.",
+    "Doctrina": "El bien supremo es el placer, entendido como experiencia sensible inmediata. Rechazaban preocupaciones metafísicas o futuras.",
+    "Contraste": "Representaban una lectura hedonista de Sócrates, opuesta al ascetismo cínico."
+  },
+  "Aristipo": {
+    "Descripción": "Discípulo de Sócrates y fundador del hedonismo cirenaico. Vivió en la corte de Dionisio de Siracusa.",
+    "Doctrina": "El placer presente es el único criterio válido de valor. No rechazaba los placeres, pero abogaba por el dominio racional sobre ellos.",
+    "Estilo": "Defendía la libertad interior del sabio, que debía disfrutar de los placeres sin esclavizarse por ellos. 'Yo poseo mis placeres, no soy poseído por ellos'."
+  },
+  "Platón": {
+    "Descripción": "Discípulo de Sócrates y maestro de Aristóteles. Fundador de la Academia de Atenas. Su obra combina diálogo literario, pensamiento filosófico, cosmología, ética y política. A través de él conocemos muchas enseñanzas de Sócrates.",
+    "Ontología": "Postuló la existencia de dos niveles de realidad: el mundo sensible (cambiante e imperfecto) y el mundo inteligible o de las Ideas (eterno, inmutable y verdadero). Las Ideas son las esencias de las cosas y la auténtica realidad.",
+    "Epistemología": "Conocer es recordar (anámnesis). El alma ha contemplado las Ideas antes de encarnarse. El conocimiento verdadero es racional, no sensible.",
+    "Ética": "La virtud es el estado armónico del alma. El alma está compuesta de tres partes: razón (sabiduría), voluntad (coraje) y apetito (templanza). La justicia es el equilibrio entre ellas.",
+    "Política": "Defendió una República gobernada por filósofos-reyes, donde cada clase social cumple su función natural (productores, guardianes, gobernantes). Criticó la democracia ateniense por su inestabilidad y demagogia.",
+    "Cosmología": "En el 'Timeo' desarrolla una visión del cosmos como obra de un Demiurgo racional que ordena la materia caótica según las Ideas eternas.",
+    "Obras": [
+      "La República",
+      "El Banquete",
+      "Fedón",
+      "Timeo",
+      "Parménides",
+      "Gorgias",
+      "Sofista"
+    ],
+    "Influencia": "Sentó las bases del idealismo filosófico. Su noción de Ideas influyó en el cristianismo, el neoplatonismo y toda la metafísica posterior."
+  },
+  "Aristóteles": {
+    "Descripción": "Discípulo de Platón y maestro de Alejandro Magno. Fundó el Liceo en Atenas. Fue el primer gran sistematizador del saber: escribió sobre lógica, metafísica, biología, ética, retórica, política y poética.",
+    "Ontología": "Criticó las Ideas platónicas. Propuso que la realidad se compone de sustancias individuales formadas por materia y forma. Todo ser tiene una potencia y una actualización.",
+    "Epistemología": "El conocimiento comienza por la experiencia sensible. A través de la inducción y la deducción, la mente abstrae las esencias. El conocimiento científico busca las causas.",
+    "Lógica": "Desarrolló el silogismo y fundó la lógica formal como instrumento del pensamiento racional (Organon).",
+    "Ética": "En 'Ética a Nicómaco', sostiene que el fin del ser humano es la eudaimonia (felicidad/florecimiento), alcanzada mediante la virtud como justo medio entre extremos.",
+    "Política": "El ser humano es un animal político. Clasificó las formas de gobierno y defendió una constitución mixta. La política debe orientarse al bien común.",
+    "Cosmología": "Concibió un universo geocéntrico, eterno y finito. El motor inmóvil es la causa última del movimiento sin ser movido.",
+    "Biología y ciencia": "Primer gran naturalista de la historia. Clasificó especies, estudió la anatomía comparada y aplicó el método empírico.",
+    "Obras": [
+      "Metafísica",
+      "Ética a Nicómaco",
+      "Política",
+      "Poética",
+      "Sobre el alma",
+      "Física",
+      "Lógica (Organon)"
+    ],
+    "Influencia": "Su pensamiento fue autoridad durante siglos. Base de la escolástica medieval. Su enfoque empírico y sistemático marcó el rumbo de la ciencia occidental."
+  }
+  };
+
+function generarEscala() {
+  const timeline = document.getElementById("timeline");
+  for (let any = escalaInici; any <= escalaFi; any += 50) {
+    const x = (any - escalaInici) * pixelsPerAny;
+    const marca = document.createElement("div");
+    marca.className = "marca";
+    marca.style.left = x + "px";
+    timeline.appendChild(marca);
+    if (any % 100 === 0) {
+      const etiqueta = document.createElement("div");
+      etiqueta.className = "etiqueta";
+      etiqueta.style.left = x - 10 + "px";
+      etiqueta.innerText = `${-any} a.C.`;
+      timeline.appendChild(etiqueta);
+    }
+  }
+}
+
+function mostrarInfo(filosofo) {
+  tancarInfo();
+  const cont = document.getElementById("info-content");
+  cont.innerHTML = `<h2>${filosofo}</h2>`;
+  let html = "";
+  if (infoDetallada[filosofo]) {
+    const data = infoDetallada[filosofo];
+    if (data["Descripción"]) {
+      html += `<p>${data["Descripción"]}</p>`;
+    }
+    Object.entries(data).forEach(([categoria, contenido]) => {
+      if (categoria !== "Descripción") {
+        html += `<div><span class='categoria-link' onclick="toggleCategoria('${filosofo}', '${categoria}')">${categoria}</span>
+          <div class='categoria-capa' id='${filosofo}-${categoria}'>${contenido}</div></div>`;
+      }
+    });
+  } else {
+    html += `<p>(Sin contenido disponible)</p>`;
+  }
+  cont.innerHTML += html;
+  document.getElementById("info").style.display = "block";
+}
+
+function toggleCategoria(filosofo, categoria) {
+  const id = `${filosofo}-${categoria}`;
+  const target = document.getElementById(id);
+  const currentlyVisible = target.style.display === "block";
+  document.querySelectorAll(".categoria-capa").forEach(c => c.style.display = "none");
+  if (!currentlyVisible) {
+    target.style.display = "block";
+  }
+}
+
+function tancarInfo() {
+  document.getElementById("info").style.display = "none";
+  document.getElementById("info-content").innerHTML = "";
+}
+
+function generarFilosofs() {
+  const cont = document.getElementById("contenidor-filosofs");
+  for (const f of filosofs) {
+    const div = document.createElement("div");
+    div.className = "filosofo" + (f.fosc==1 ? " fosc" : (f.fosc==2? " fosc2" : ""));
+    div.style.top = (offsetYBase + f.y * 30+ 10) + "px";
+    div.style.left = ((f.neix - escalaInici) * pixelsPerAny+100) + "px";
+    div.style.width = ((f.mor - f.neix) * pixelsPerAny) + "px";
+    div.innerText = f.nom;
+    div.onclick = () => mostrarInfo(f.nom);
+    cont.appendChild(div);
+  }
+}
+
+generarEscala();
+generarFilosofs();
+</script>
+
+</body>
+</html>
